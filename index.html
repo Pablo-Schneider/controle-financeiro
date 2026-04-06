@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Financeiro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+--roxo:#6c4cf1;
+--verde:#28a745;
+--vermelho:#dc3545;
+--bg:#f4f6f9;
+--card:#ffffff;
+--text:#000;
+}
+
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#121212;
+--card:#1e1e1e;
+--text:#ffffff;
+}
+}
+
+body{
+font-family:Arial;
+background:var(--bg);
+margin:0;
+color:var(--text);
+}
+
+header{
+background:var(--roxo);
+color:white;
+padding:15px;
+text-align:center;
+font-size:20px;
+font-weight:bold;
+}
+
+.container{
+padding:15px;
+}
+
+.card{
+background:var(--card);
+padding:15px;
+border-radius:10px;
+margin-bottom:12px;
+box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
+
+.saldo{
+font-size:24px;
+font-weight:bold;
+color:var(--roxo);
+}
+
+.entrada{color:var(--verde);}
+.saida{color:var(--vermelho);}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:6px;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:12px;
+border:none;
+border-radius:8px;
+margin-top:8px;
+font-size:16px;
+color:white;
+}
+
+.btnAdd{background:var(--roxo);}
+.btnRemover{background:var(--vermelho);}
+
+.item{
+display:flex;
+justify-content:space-between;
+padding:10px;
+background:var(--card);
+border-radius:8px;
+margin-top:5px;
+}
+
+canvas{
+margin-top:10px;
+}
+</style>
+</head>
+<body>
+<header>Controle Financeiro</header>
+<div class="container">
+<div class="card">
+Selecionar mês
+<input type="month" id="mes">
+</div>
+<div class="card">
+Saldo do mês
+<div class="saldo" id="saldo">R$ 0</div>
+</div>
+<div class="card">
+Entradas: <span class="entrada" id="entradas">R$ 0</span><br>
+Despesas: <span class="saida" id="despesas">R$ 0</span>
+</div>
+<div class="card">
+<input type="date" id="data">
+<input type="text" id="desc" placeholder="Descrição">
+<input type="number" id="valor" placeholder="Valor">
+<select id="categoria">
+<option>Alimentação</option>
+<option>Combustível</option>
+<option>Moradia</option>
+<option>Internet</option>
+<option>Transporte</option>
+<option>Lazer</option>
+<option>Outros</option>
+</select>
+<select id="tipo">
+<option value="entrada">Entrada</option>
+<option value="saida">Despesa</option>
+</select>
+</div>
+<div class="card">
+Últimos lançamentos
+<div id="lista"></div>
+</div>
+<div class="card">
+Gráfico por categoria
+<canvas id="grafico"></canvas>
+</div>
+</div>
+<script>
+
+let dados = JSON.parse(localStorage.getItem("dados")) || [];
+
+document.getElementById("mes").value = new Date().toISOString().slice(0,7);
+document.getElementById("data").value = new Date().toISOString().slice(0,10);
+
+function salvar(){
+localStorage.setItem("dados", JSON.stringify(dados));
+}
+
+function atualizar(){
+
+let mesSelecionado = document.getElementById("mes").value;
+
+let entradas = 0;
+let despesas = 0;
+let categorias = {};
+
+let lista = document.getElementById("lista");
+lista.innerHTML="";
+
+dados.forEach((d,i)=>{
+
+if(d.data.slice(0,7) == mesSelecionado){
+
+if(d.tipo=="entrada") entradas += d.valor;
+else despesas += d.valor;
+
+if(!categorias[d.categoria]) categorias[d.categoria]=0;
+categorias[d.categoria]+=d.valor;
+
+lista.innerHTML += `
+<div class="item">
+<div>
+${d.data}<br>
+${d.desc}<br>
+${d.categoria} - R$ ${d.valor}
+</div>
+<button class="btnRemover" onclick="remover(${i})">X</button>
+</div>`;
+}
+
+});
+
+document.getElementById("entradas").innerHTML="R$ "+entradas.toFixed(2);
+document.getElementById("despesas").innerHTML="R$ "+despesas.toFixed(2);
+document.getElementById("saldo").innerHTML="R$ "+(entradas-despesas).toFixed(2);
+
+grafico(categorias);
+}
+
+function add(){
+
+let data = document.getElementById("data").value;
+let desc = document.getElementById("desc").value;
+let valor = parseFloat(document.getElementById("valor").value);
+let categoria = document.getElementById("categoria").value;
+let tipo = document.getElementById("tipo").value;
+
+if(!data || !desc || !valor) return;
+
+dados.push({data,desc,valor,categoria,tipo});
+
+salvar();
+atualizar();
+
+document.getElementById("desc").value="";
+document.getElementById("valor").value="";
+}
+
+function remover(i){
+dados.splice(i,1);
+salvar();
+atualizar();
+}
+
+let chart;
+
+function grafico(categorias){
+
+let ctx = document.getElementById("grafico");
+
+if(chart) chart.destroy();
+
+chart = new Chart(ctx,{
+type:'pie',
+data:{
+labels:Object.keys(categorias),
+datasets:[{
+data:Object.values(categorias)
+}]
+}
+});
+}
+
+document.getElementById("mes").addEventListener("change", atualizar);
+
+atualizar();
+
+</script>
+</body>
+</html>
+:::
