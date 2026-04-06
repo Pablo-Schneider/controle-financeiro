@@ -1,71 +1,131 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Financeiro</title>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
-    margin: 0;
-    padding: 20px;
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
 
-.container {
-    max-width: 500px;
-    margin: auto;
+body{
+background:#0f0f14;
+color:#fff;
+padding:15px;
 }
 
-h1 {
-    text-align: center;
+.container{
+max-width:500px;
+margin:auto;
 }
 
-input, button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
+h1{
+text-align:center;
+margin-bottom:15px;
+color:#b983ff;
 }
 
-input {
-    background: #1e293b;
-    color: white;
+.card{
+background:#1a1a24;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+box-shadow:0 0 10px rgba(0,0,0,0.3);
 }
 
-button {
-    background: #22c55e;
-    color: white;
-    font-weight: bold;
+.topo{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
 }
 
-button:hover {
-    background: #16a34a;
+select,input,button{
+width:100%;
+padding:10px;
+margin-top:8px;
+border:none;
+border-radius:8px;
+background:#2a2a35;
+color:#fff;
 }
 
-.lista {
-    margin-top: 20px;
+button{
+background:#7c3aed;
+font-weight:bold;
+cursor:pointer;
 }
 
-.item {
-    background: #1e293b;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
+button:hover{
+background:#6d28d9;
 }
 
-.total {
-    margin-top: 20px;
-    font-size: 20px;
-    text-align: center;
-    font-weight: bold;
+.saldo{
+font-size:22px;
+font-weight:bold;
+text-align:center;
 }
+
+.receitas{
+color:#22c55e;
+}
+
+.despesas{
+color:#ef4444;
+}
+
+.cards{
+display:flex;
+gap:10px;
+}
+
+.cards .card{
+flex:1;
+text-align:center;
+}
+
+.lista{
+margin-top:10px;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+background:#2a2a35;
+padding:10px;
+border-radius:8px;
+margin-top:8px;
+cursor:pointer;
+}
+
+.valorReceita{
+color:#22c55e;
+}
+
+.valorDespesa{
+color:#ef4444;
+}
+
+.excluir{
+background:red;
+border:none;
+color:white;
+padding:5px 8px;
+border-radius:6px;
+cursor:pointer;
+}
+
+canvas{
+margin-top:15px;
+}
+
 </style>
 </head>
 
@@ -75,78 +135,266 @@ button:hover {
 
 <h1>Controle Financeiro</h1>
 
+<div class="card">
+<div class="topo">
+<label>Mês</label>
+<select id="mes">
+<option value="2026-01">Janeiro</option>
+<option value="2026-02">Fevereiro</option>
+<option value="2026-03">Março</option>
+<option value="2026-04">Abril</option>
+<option value="2026-05">Maio</option>
+<option value="2026-06">Junho</option>
+<option value="2026-07">Julho</option>
+<option value="2026-08">Agosto</option>
+<option value="2026-09">Setembro</option>
+<option value="2026-10">Outubro</option>
+<option value="2026-11">Novembro</option>
+<option value="2026-12">Dezembro</option>
+</select>
+</div>
+
+<div class="saldo" id="saldoTotal">R$ 0,00</div>
+</div>
+
+<div class="cards">
+
+<div class="card">
+<h3>Receitas</h3>
+<div class="receitas" id="totalReceitas">R$ 0,00</div>
+</div>
+
+<div class="card">
+<h3>Despesas</h3>
+<div class="despesas" id="totalDespesas">R$ 0,00</div>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Adicionar lançamento</h3>
+
+<input type="date" id="data">
+
 <input type="text" id="descricao" placeholder="Descrição">
+
 <input type="number" id="valor" placeholder="Valor">
+
+<select id="categoria">
+<option>Alimentação</option>
+<option>Transporte</option>
+<option>Moradia</option>
+<option>Lazer</option>
+<option>Salário</option>
+<option>Outros</option>
+</select>
+
+<select id="tipo">
+<option value="receita">Receita</option>
+<option value="despesa">Despesa</option>
+</select>
 
 <button onclick="adicionar()">Adicionar</button>
 
-<div class="lista" id="lista"></div>
-
-<div class="total">
-Total: R$ <span id="total">0</span>
 </div>
 
+<div class="card">
+
+<h3>Lançamentos</h3>
+
+<div class="lista" id="lista"></div>
+
+<canvas id="grafico"></canvas>
+
+</div>
 </div>
 
 <script>
 
-let gastos = JSON.parse(localStorage.getItem("gastos")) || [];
+let editando = null
 
-function salvar() {
-    localStorage.setItem("gastos", JSON.stringify(gastos));
+function obterDados(){
+return JSON.parse(localStorage.getItem("financas") || "{}")
 }
 
-function adicionar() {
-
-    let descricao = document.getElementById("descricao").value;
-    let valor = document.getElementById("valor").value;
-
-    if (descricao === "" || valor === "") {
-        alert("Preencha os campos");
-        return;
-    }
-
-    gastos.push({
-        descricao,
-        valor: parseFloat(valor)
-    });
-
-    salvar();
-    mostrar();
-
-    document.getElementById("descricao").value = "";
-    document.getElementById("valor").value = "";
+function salvarDados(dados){
+localStorage.setItem("financas", JSON.stringify(dados))
 }
 
-function remover(index) {
-    gastos.splice(index, 1);
-    salvar();
-    mostrar();
+function formatar(valor){
+return valor.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 }
 
-function mostrar() {
+function adicionar(){
 
-    let lista = document.getElementById("lista");
-    lista.innerHTML = "";
+let mes = document.getElementById("mes").value
+let data = document.getElementById("data").value
+let descricao = document.getElementById("descricao").value
+let valor = parseFloat(document.getElementById("valor").value)
+let categoria = document.getElementById("categoria").value
+let tipo = document.getElementById("tipo").value
 
-    let total = 0;
-
-    gastos.forEach((gasto, index) => {
-
-        total += gasto.valor;
-
-        lista.innerHTML += `
-            <div class="item">
-                ${gasto.descricao} - R$ ${gasto.valor}
-                <button onclick="remover(${index})">X</button>
-            </div>
-        `;
-    });
-
-    document.getElementById("total").innerText = total.toFixed(2);
+if(!descricao || !valor){
+alert("Preencha os campos")
+return
 }
 
-mostrar();
+let dados = obterDados()
+
+if(!dados[mes]){
+dados[mes] = []
+}
+
+if(editando !== null){
+dados[mes][editando] = {data,descricao,valor,categoria,tipo}
+editando = null
+}else{
+dados[mes].push({data,descricao,valor,categoria,tipo})
+}
+
+salvarDados(dados)
+
+limpar()
+
+carregar()
+}
+
+function limpar(){
+document.getElementById("data").value=""
+document.getElementById("descricao").value=""
+document.getElementById("valor").value=""
+}
+
+function excluir(i){
+
+let mes = document.getElementById("mes").value
+let dados = obterDados()
+
+dados[mes].splice(i,1)
+
+salvarDados(dados)
+
+carregar()
+}
+
+function editar(i){
+
+let mes = document.getElementById("mes").value
+let dados = obterDados()
+
+let item = dados[mes][i]
+
+document.getElementById("data").value=item.data
+document.getElementById("descricao").value=item.descricao
+document.getElementById("valor").value=item.valor
+document.getElementById("categoria").value=item.categoria
+document.getElementById("tipo").value=item.tipo
+
+editando = i
+}
+
+let grafico = null
+
+function carregar(){
+
+let mes = document.getElementById("mes").value
+let dados = obterDados()
+
+let lista = document.getElementById("lista")
+lista.innerHTML=""
+
+let receitas = 0
+let despesas = 0
+
+let categorias = {}
+
+if(dados[mes]){
+
+dados[mes].forEach((item,i)=>{
+
+let div = document.createElement("div")
+div.className="item"
+
+div.innerHTML = `
+<div onclick="editar(${i})">
+${item.data || ""} - ${item.descricao}<br>
+<small>${item.categoria}</small>
+</div>
+
+<div>
+<span class="${item.tipo=="receita"?"valorReceita":"valorDespesa"}">
+${formatar(item.valor)}
+</span>
+
+<button class="excluir" onclick="excluir(${i})">X</button>
+</div>
+`
+
+lista.appendChild(div)
+
+if(item.tipo=="receita"){
+receitas += item.valor
+}else{
+despesas += item.valor
+
+if(!categorias[item.categoria]){
+categorias[item.categoria]=0
+}
+
+categorias[item.categoria]+=item.valor
+}
+
+})
+
+}
+
+let saldo = receitas - despesas
+
+document.getElementById("saldoTotal").innerText = formatar(saldo)
+document.getElementById("totalReceitas").innerText = formatar(receitas)
+document.getElementById("totalDespesas").innerText = formatar(despesas)
+
+let saldoDiv = document.getElementById("saldoTotal")
+
+saldoDiv.style.color = saldo >=0 ? "#22c55e" : "#ef4444"
+
+desenharGrafico(categorias)
+
+}
+
+function desenharGrafico(categorias){
+
+let ctx = document.getElementById("grafico")
+
+if(grafico){
+grafico.destroy()
+}
+
+grafico = new Chart(ctx,{
+type:"pie",
+data:{
+labels:Object.keys(categorias),
+datasets:[{
+data:Object.values(categorias)
+}]
+},
+options:{
+plugins:{
+legend:{
+labels:{
+color:"#fff"
+}
+}
+}
+}
+})
+
+}
+
+document.getElementById("mes").addEventListener("change",carregar)
+
+carregar()
 
 </script>
 
