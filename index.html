@@ -25,57 +25,16 @@
 
     body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    /* ── LOGIN SCREEN ── */
-    #login-screen {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 100vh; gap: 24px;
-      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
-    }
-    #login-screen .login-card {
-      background: white; border-radius: 16px;
-      padding: 40px 36px; text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-      max-width: 360px; width: 90%;
-    }
-    #login-screen .logo { font-size: 56px; margin-bottom: 12px; }
-    #login-screen h1 { font-size: 22px; color: var(--green); margin-bottom: 6px; }
-    #login-screen p  { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
-    #btn-google {
-      display: flex; align-items: center; justify-content: center; gap: 12px;
-      width: 100%; padding: 13px 20px;
-      background: white; border: 2px solid var(--border);
-      border-radius: 10px; font-size: 15px; font-weight: 600;
-      cursor: pointer; transition: box-shadow .2s, border-color .2s;
-      color: var(--text);
-    }
-    #btn-google:hover { border-color: var(--green); box-shadow: 0 2px 12px rgba(0,0,0,0.12); }
-    #btn-google img { width: 22px; height: 22px; }
-
-    /* ── APP ── */
-    #app-screen { display: none; }
-
     header {
       background: linear-gradient(135deg, var(--green) 0%, #1b5e20 100%);
       color: white; padding: 16px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 12px; flex-wrap: wrap;
+      display: flex; align-items: center; gap: 12px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       position: sticky; top: 0; z-index: 100;
     }
-    .header-left { display: flex; align-items: center; gap: 12px; }
     header .logo { font-size: 28px; }
     header h1 { font-size: 20px; font-weight: 700; line-height: 1.2; }
     header p  { font-size: 12px; opacity: .85; }
-    .header-right { display: flex; align-items: center; gap: 10px; }
-    .user-info { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-    .user-info img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.6); }
-    #btn-logout {
-      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.4);
-      color: white; padding: 6px 14px; border-radius: 8px;
-      font-size: 13px; cursor: pointer; transition: background .2s;
-    }
-    #btn-logout:hover { background: rgba(255,255,255,0.25); }
 
     nav {
       background: #fff; border-bottom: 2px solid var(--border);
@@ -169,9 +128,8 @@
 
     #loading-overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(255,255,255,0.8); z-index: 500;
+      background: rgba(255,255,255,0.85); z-index: 500;
       align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 600; color: var(--green);
       flex-direction: column; gap: 12px;
     }
     #loading-overlay.show { display: flex; }
@@ -183,6 +141,7 @@
       animation: spin .8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    #loading-msg { font-size: 15px; font-weight: 600; color: var(--green); }
 
     #toast {
       position: fixed; bottom: 24px; right: 24px;
@@ -199,221 +158,195 @@
       header h1 { font-size: 16px; }
       main { padding: 16px 10px; }
       .btn { padding: 10px 16px; font-size: 13px; }
-      .user-info span { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- ══ TELA DE LOGIN ══ -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="logo">🌾</div>
+<header>
+  <span class="logo">🌾</span>
+  <div>
     <h1>Controle Financeiro Rural</h1>
-    <p>Lavoura & Chiqueirão<br>Faça login para continuar</p>
-    <button id="btn-google" onclick="loginGoogle()">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      Entrar com Google
-    </button>
+    <p>Lavoura & Chiqueirão</p>
   </div>
-</div>
+</header>
 
-<!-- ══ APP PRINCIPAL ══ -->
-<div id="app-screen">
-  <header>
-    <div class="header-left">
-      <span class="logo">🌾</span>
-      <div>
-        <h1>Controle Financeiro Rural</h1>
-        <p>Lavoura & Chiqueirão</p>
+<nav>
+  <button class="active" onclick="goTo('dashboard', this)">📊 Dashboard</button>
+  <button onclick="goTo('lancamentos', this)">📋 Lançamentos</button>
+  <button onclick="goTo('novo', this)">➕ Novo Lançamento</button>
+  <button onclick="goTo('relatorio', this)">📈 Relatório</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="cards" id="dash-cards"></div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>📅 Entradas x Saídas por Mês</h3>
+        <canvas id="chartMes"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>🏷️ Entradas x Saídas (Geral)</h3>
+        <canvas id="chartPizza"></canvas>
+        <p id="pizzaEmpty" class="empty" style="display:none">Sem dados registrados</p>
       </div>
     </div>
-    <div class="header-right">
-      <div class="user-info">
-        <img id="user-photo" src="" alt="">
-        <span id="user-name"></span>
-      </div>
-      <button id="btn-logout" onclick="logout()">Sair</button>
+    <div class="sec-title">🚜 Resultado por Atividade</div>
+    <div class="table-wrap">
+      <table class="ativ-table" id="tabelaAtiv">
+        <thead><tr><th>Atividade</th><th>Entradas</th><th>Saídas</th><th>Lucro</th><th>%</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </header>
+  </div>
 
-  <nav>
-    <button class="active" onclick="goTo('dashboard', this)">📊 Dashboard</button>
-    <button onclick="goTo('lancamentos', this)">📋 Lançamentos</button>
-    <button onclick="goTo('novo', this)">➕ Novo Lançamento</button>
-    <button onclick="goTo('relatorio', this)">📈 Relatório</button>
-  </nav>
-
-  <main>
-
-    <!-- DASHBOARD -->
-    <div id="page-dashboard" class="page active">
-      <div class="cards" id="dash-cards"></div>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <h3>📅 Entradas x Saídas por Mês</h3>
-          <canvas id="chartMes"></canvas>
-        </div>
-        <div class="chart-card">
-          <h3>🏷️ Entradas x Saídas (Geral)</h3>
-          <canvas id="chartPizza"></canvas>
-          <p id="pizzaEmpty" class="empty" style="display:none">Sem dados registrados</p>
-        </div>
+  <!-- LANÇAMENTOS -->
+  <div id="page-lancamentos" class="page">
+    <div class="filtros">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="fTipo"><option value="">Todos</option><option>Entrada</option><option>Saída</option></select>
       </div>
-      <div class="sec-title">🚜 Resultado por Atividade</div>
-      <div class="table-wrap">
-        <table class="ativ-table" id="tabelaAtiv">
-          <thead><tr><th>Atividade</th><th>Entradas</th><th>Saídas</th><th>Lucro</th><th>%</th></tr></thead>
-          <tbody></tbody>
-        </table>
+      <div class="form-group">
+        <label>Atividade</label>
+        <select id="fAtiv">
+          <option value="">Todas</option>
+          <option>Chiqueirão</option><option>Lavoura</option><option>Gado</option>
+          <option>Casa</option><option>Máquinas</option><option>Outros</option>
+        </select>
       </div>
+      <div class="form-group">
+        <label>Mês</label>
+        <select id="fMes">
+          <option value="">Todos</option>
+          <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
+          <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
+          <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Ano</label>
+        <select id="fAno"><option value="">Todos</option></select>
+      </div>
+      <button class="btn btn-outline" onclick="renderLancamentos()">🔍 Filtrar</button>
+      <button class="btn btn-outline" onclick="limparFiltros()">✖ Limpar</button>
     </div>
+    <div class="table-wrap">
+      <table id="tabelaLanc">
+        <thead>
+          <tr>
+            <th>Data</th><th>Mês</th><th>Tipo</th><th>Atividade</th>
+            <th>Categoria</th><th>Descrição</th><th>Observação</th>
+            <th>Pagamento</th><th>Safra/Lote</th><th>Valor</th><th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="bodyLanc"></tbody>
+      </table>
+    </div>
+  </div>
 
-    <!-- LANÇAMENTOS -->
-    <div id="page-lancamentos" class="page">
-      <div class="filtros">
+  <!-- NOVO LANÇAMENTO -->
+  <div id="page-novo" class="page">
+    <div class="form-card">
+      <h2 id="form-title">➕ Novo Lançamento</h2>
+      <div class="form-grid">
         <div class="form-group">
-          <label>Tipo</label>
-          <select id="fTipo"><option value="">Todos</option><option>Entrada</option><option>Saída</option></select>
+          <label>Data *</label>
+          <input type="date" id="fData" />
         </div>
         <div class="form-group">
-          <label>Atividade</label>
-          <select id="fAtiv">
-            <option value="">Todas</option>
+          <label>Tipo *</label>
+          <select id="fTipoForm" onchange="atualizarCategorias()">
+            <option value="">Selecione</option>
+            <option>Entrada</option><option>Saída</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Atividade *</label>
+          <select id="fAtivForm">
+            <option value="">Selecione</option>
             <option>Chiqueirão</option><option>Lavoura</option><option>Gado</option>
             <option>Casa</option><option>Máquinas</option><option>Outros</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Mês</label>
-          <select id="fMes">
-            <option value="">Todos</option>
-            <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
-            <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
-            <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
+          <label>Categoria *</label>
+          <select id="fCatForm"><option value="">Selecione o Tipo primeiro</option></select>
+        </div>
+        <div class="form-group">
+          <label>Descrição</label>
+          <input type="text" id="fDesc" placeholder="Ex: Venda Safra, Compra Ração..." />
+        </div>
+        <div class="form-group">
+          <label>Forma de Pagamento *</label>
+          <select id="fPagForm">
+            <option value="">Selecione</option>
+            <option>Pix</option><option>Dinheiro</option><option>Boleto</option>
+            <option>Cartão</option><option>Transferência</option><option>Cheque</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Ano</label>
-          <select id="fAno"><option value="">Todos</option></select>
+          <label>Valor (R$) *</label>
+          <input type="number" id="fValor" placeholder="0,00" min="0" step="0.01" />
         </div>
-        <button class="btn btn-outline" onclick="renderLancamentos()">🔍 Filtrar</button>
-        <button class="btn btn-outline" onclick="limparFiltros()">✖ Limpar</button>
+        <div class="form-group">
+          <label>Safra / Lote</label>
+          <input type="text" id="fSafra" placeholder="Ex: Lote 1, Safra 2026..." />
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Observação</label>
+          <textarea id="fObs" placeholder="Observações adicionais..."></textarea>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table id="tabelaLanc">
-          <thead>
-            <tr>
-              <th>Data</th><th>Mês</th><th>Tipo</th><th>Atividade</th>
-              <th>Categoria</th><th>Descrição</th><th>Observação</th>
-              <th>Pagamento</th><th>Safra/Lote</th><th>Valor</th><th>Ação</th>
-            </tr>
-          </thead>
-          <tbody id="bodyLanc"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- NOVO LANÇAMENTO -->
-    <div id="page-novo" class="page">
-      <div class="form-card">
-        <h2 id="form-title">➕ Novo Lançamento</h2>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Data *</label>
-            <input type="date" id="fData" />
-          </div>
-          <div class="form-group">
-            <label>Tipo *</label>
-            <select id="fTipoForm" onchange="atualizarCategorias()">
-              <option value="">Selecione</option>
-              <option>Entrada</option><option>Saída</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Atividade *</label>
-            <select id="fAtivForm">
-              <option value="">Selecione</option>
-              <option>Chiqueirão</option><option>Lavoura</option><option>Gado</option>
-              <option>Casa</option><option>Máquinas</option><option>Outros</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Categoria *</label>
-            <select id="fCatForm"><option value="">Selecione o Tipo primeiro</option></select>
-          </div>
-          <div class="form-group">
-            <label>Descrição</label>
-            <input type="text" id="fDesc" placeholder="Ex: Venda Safra, Compra Ração..." />
-          </div>
-          <div class="form-group">
-            <label>Forma de Pagamento *</label>
-            <select id="fPagForm">
-              <option value="">Selecione</option>
-              <option>Pix</option><option>Dinheiro</option><option>Boleto</option>
-              <option>Cartão</option><option>Transferência</option><option>Cheque</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Valor (R$) *</label>
-            <input type="number" id="fValor" placeholder="0,00" min="0" step="0.01" />
-          </div>
-          <div class="form-group">
-            <label>Safra / Lote</label>
-            <input type="text" id="fSafra" placeholder="Ex: Lote 1, Safra 2026..." />
-          </div>
-          <div class="form-group" style="grid-column:1/-1">
-            <label>Observação</label>
-            <textarea id="fObs" placeholder="Observações adicionais..."></textarea>
-          </div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="salvarLancamento()">💾 Salvar</button>
-          <button class="btn btn-outline" onclick="cancelarEdicao()">✖ Cancelar</button>
-        </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="salvarLancamento()">💾 Salvar</button>
+        <button class="btn btn-outline" onclick="cancelarEdicao()">✖ Cancelar</button>
       </div>
     </div>
+  </div>
 
-    <!-- RELATÓRIO -->
-    <div id="page-relatorio" class="page">
-      <div class="filtros">
-        <div class="form-group">
-          <label>Atividade</label>
-          <select id="rAtiv">
-            <option value="">Todas</option>
-            <option>Chiqueirão</option><option>Lavoura</option><option>Gado</option>
-            <option>Casa</option><option>Máquinas</option><option>Outros</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Ano</label>
-          <select id="rAno"><option value="">Todos</option></select>
-        </div>
-        <div class="form-group">
-          <label>Mês Início</label>
-          <select id="rMesIni">
-            <option value="">Todos</option>
-            <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
-            <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
-            <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Mês Fim</label>
-          <select id="rMesFim">
-            <option value="">Todos</option>
-            <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
-            <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
-            <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="renderRelatorio()">📈 Gerar Relatório</button>
+  <!-- RELATÓRIO -->
+  <div id="page-relatorio" class="page">
+    <div class="filtros">
+      <div class="form-group">
+        <label>Atividade</label>
+        <select id="rAtiv">
+          <option value="">Todas</option>
+          <option>Chiqueirão</option><option>Lavoura</option><option>Gado</option>
+          <option>Casa</option><option>Máquinas</option><option>Outros</option>
+        </select>
       </div>
-      <div id="relContent"></div>
+      <div class="form-group">
+        <label>Ano</label>
+        <select id="rAno"><option value="">Todos</option></select>
+      </div>
+      <div class="form-group">
+        <label>Mês Início</label>
+        <select id="rMesIni">
+          <option value="">Todos</option>
+          <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
+          <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
+          <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Mês Fim</label>
+        <select id="rMesFim">
+          <option value="">Todos</option>
+          <option>JAN</option><option>FEV</option><option>MAR</option><option>ABR</option>
+          <option>MAI</option><option>JUN</option><option>JUL</option><option>AGO</option>
+          <option>SET</option><option>OUT</option><option>NOV</option><option>DEZ</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="renderRelatorio()">📈 Gerar Relatório</button>
     </div>
+    <div id="relContent"></div>
+  </div>
 
-  </main>
-</div>
+</main>
 
 <!-- MODAL EXCLUSÃO -->
 <div class="modal-overlay" id="modalDel">
@@ -437,7 +370,6 @@
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
@@ -453,10 +385,8 @@ firebase.initializeApp({
   appId: "1:280064239916:web:a14267e58e5d37c5ce6489"
 });
 
-const auth      = firebase.auth();
-const db        = firebase.firestore();
-const colecao   = db.collection('lancamentos');
-const provider  = new firebase.auth.GoogleAuthProvider();
+const db      = firebase.firestore();
+const colecao = db.collection('lancamentos');
 
 // ══════════════════════════
 //  CONSTANTES
@@ -471,76 +401,41 @@ const CAT_SAIDA   = ['Diesel','Gasolina','Luz','Água','Internet','Recarga Celul
 // ══════════════════════════
 //  ESTADO
 // ══════════════════════════
-let lancamentos  = [];
-let editandoId   = null;
-let deletandoId  = null;
-let unsubscribe  = null;
+let lancamentos = [];
+let editandoId  = null;
+let deletandoId = null;
 
 // ══════════════════════════
-//  AUTH
-// ══════════════════════════
-auth.onAuthStateChanged(user => {
-  if (user) {
-    document.getElementById('login-screen').style.display  = 'none';
-    document.getElementById('app-screen').style.display    = 'block';
-    document.getElementById('user-name').textContent       = user.displayName?.split(' ')[0] || 'Usuário';
-    document.getElementById('user-photo').src              = user.photoURL || '';
-    iniciarListener();
-  } else {
-    document.getElementById('login-screen').style.display  = 'flex';
-    document.getElementById('app-screen').style.display    = 'none';
-    if (unsubscribe) { unsubscribe(); unsubscribe = null; }
-  }
-});
-
-function loginGoogle() {
-  showLoading('Autenticando...');
-  auth.signInWithPopup(provider)
-    .catch(err => { toast('❌ Erro no login: ' + err.message, '#c62828'); })
-    .finally(hideLoading);
-}
-
-function logout() {
-  auth.signOut();
-}
-
-// ══════════════════════════
-//  FIRESTORE — LISTENER
+//  LISTENER TEMPO REAL
 // ══════════════════════════
 function iniciarListener() {
   showLoading('Carregando dados...');
-
-  if (unsubscribe) unsubscribe();
-
-  unsubscribe = colecao
-    .orderBy('data', 'desc')
-    .onSnapshot(snapshot => {
-      lancamentos = snapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
-      popularFiltroAnos();
-      renderDashboard();
-      hideLoading();
-    }, err => {
-      hideLoading();
-      toast('❌ Erro ao carregar dados!', '#c62828');
-      console.error(err);
-    });
+  colecao.orderBy('data', 'desc').onSnapshot(snapshot => {
+    lancamentos = snapshot.docs.map(doc => ({ firestoreId: doc.id, ...doc.data() }));
+    popularFiltroAnos();
+    renderDashboard();
+    hideLoading();
+  }, err => {
+    hideLoading();
+    toast('❌ Erro ao carregar dados!', '#c62828');
+    console.error(err);
+  });
 }
 
 // ══════════════════════════
 //  UTILS
 // ══════════════════════════
-function fmt(v)       { return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function mesDeData(d) { return MESES[new Date(d+'T00:00:00').getMonth()]; }
-function anoDeData(d) { return new Date(d+'T00:00:00').getFullYear(); }
+function fmt(v)       { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+function mesDeData(d) { return MESES[new Date(d + 'T00:00:00').getMonth()]; }
+function anoDeData(d) { return new Date(d + 'T00:00:00').getFullYear(); }
 
-function toast(msg, cor='var(--green)') {
+function toast(msg, cor = 'var(--green)') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.style.background = cor;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
-
-function showLoading(msg='Carregando...') {
+function showLoading(msg = 'Carregando...') {
   document.getElementById('loading-msg').textContent = msg;
   document.getElementById('loading-overlay').classList.add('show');
 }
@@ -559,22 +454,22 @@ function goTo(page, btn) {
 }
 
 function popularFiltroAnos() {
-  const anos = [...new Set(lancamentos.map(l => l.ano))].sort((a,b) => a-b);
-  ['fAno','rAno'].forEach(id => {
+  const anos = [...new Set(lancamentos.map(l => l.ano))].sort((a, b) => a - b);
+  ['fAno', 'rAno'].forEach(id => {
     const el = document.getElementById(id); if (!el) return;
     const val = el.value;
     el.innerHTML = '<option value="">Todos</option>';
-    anos.forEach(a => el.innerHTML += `<option ${a==val?'selected':''}>${a}</option>`);
+    anos.forEach(a => el.innerHTML += `<option ${a == val ? 'selected' : ''}>${a}</option>`);
   });
 }
 
 // ══════════════════════════
-//  CATEGORIAS DINÂMICAS
+//  CATEGORIAS
 // ══════════════════════════
 function atualizarCategorias() {
   const tipo = document.getElementById('fTipoForm').value;
   const sel  = document.getElementById('fCatForm');
-  const cats = tipo==='Entrada' ? CAT_ENTRADA : tipo==='Saída' ? CAT_SAIDA : [];
+  const cats = tipo === 'Entrada' ? CAT_ENTRADA : tipo === 'Saída' ? CAT_SAIDA : [];
   sel.innerHTML = '<option value="">Selecione</option>';
   cats.forEach(c => sel.innerHTML += `<option>${c}</option>`);
 }
@@ -600,15 +495,13 @@ async function salvarLancamento() {
 
   const payload = {
     data, tipo, atividade: ativ, categoria: cat,
-    descricao: desc, obs, pagamento: pag,
-    valor, safra,
+    descricao: desc, obs, pagamento: pag, valor, safra,
     mes: mesDeData(data),
     ano: anoDeData(data),
     atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   showLoading(editandoId ? 'Atualizando...' : 'Salvando...');
-
   try {
     if (editandoId) {
       await colecao.doc(editandoId).update(payload);
@@ -699,7 +592,7 @@ function renderLancamentos() {
   if (ativ) dados = dados.filter(l => l.atividade === ativ);
   if (mes)  dados = dados.filter(l => l.mes === mes);
   if (ano)  dados = dados.filter(l => l.ano == ano);
-  dados.sort((a,b) => new Date(b.data) - new Date(a.data));
+  dados.sort((a, b) => new Date(b.data) - new Date(a.data));
 
   const tbody = document.getElementById('bodyLanc');
   if (!dados.length) {
@@ -735,8 +628,8 @@ let chartMes   = null;
 let chartPizza = null;
 
 function renderPizza() {
-  const totalE = lancamentos.filter(l => l.tipo==='Entrada').reduce((s,l) => s+l.valor, 0);
-  const totalS = lancamentos.filter(l => l.tipo==='Saída').reduce((s,l) => s+l.valor, 0);
+  const totalE  = lancamentos.filter(l => l.tipo==='Entrada').reduce((s,l) => s+l.valor, 0);
+  const totalS  = lancamentos.filter(l => l.tipo==='Saída').reduce((s,l) => s+l.valor, 0);
   const emptyEl = document.getElementById('pizzaEmpty');
   const canvas  = document.getElementById('chartPizza');
 
@@ -803,7 +696,6 @@ function renderDashboard() {
     </div>
   `;
 
-  // Tabela atividades
   const ativs   = ['Chiqueirão','Lavoura','Gado','Casa','Máquinas','Outros'];
   const totalEG = lancamentos.filter(l => l.tipo==='Entrada').reduce((s,l) => s+l.valor, 0);
   let rows = '', totE = 0, totS = 0;
@@ -832,7 +724,6 @@ function renderDashboard() {
   document.querySelector('#tabelaAtiv tbody').innerHTML =
     rows || '<tr><td colspan="5" class="empty">Sem dados</td></tr>';
 
-  // Gráfico barras
   const dadosMes = {};
   MESES.forEach(m => dadosMes[m] = {e:0,s:0});
   lancamentos.forEach(l => {
@@ -853,8 +744,8 @@ function renderDashboard() {
     },
     options: {
       responsive: true,
-      plugins: { legend: { position:'bottom' } },
-      scales: { y: { ticks: { callback: v => 'R$ '+v.toLocaleString('pt-BR') } } }
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } } }
     }
   });
 
@@ -894,7 +785,7 @@ function renderRelatorio() {
 
   const porCat  = {};
   const porCatE = {};
-  dados.filter(l => l.tipo==='Saída').forEach(l   => { porCat[l.categoria]  = (porCat[l.categoria]  || 0) + l.valor; });
+  dados.filter(l => l.tipo==='Saída').forEach(l    => { porCat[l.categoria]  = (porCat[l.categoria]  || 0) + l.valor; });
   dados.filter(l => l.tipo==='Entrada').forEach(l  => { porCatE[l.categoria] = (porCatE[l.categoria] || 0) + l.valor; });
 
   document.getElementById('relContent').innerHTML = `
@@ -971,6 +862,11 @@ function renderRelatorio() {
     </div>
   `;
 }
+
+// ══════════════════════════
+//  INIT
+// ══════════════════════════
+iniciarListener();
 </script>
 </body>
 </html>
